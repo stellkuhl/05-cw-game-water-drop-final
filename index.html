@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Droplet | charity: water</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-container">
+
+    <!-- START SCREEN -->
+    <section id="start-screen" class="screen">
+      <div class="card start-card">
+        <div class="brand-block">
+          <img src="img/cw_logo-horizontal.png" alt="charity: water logo" class="logo">
+          <h1 class="game-title">DROPLET</h1>
+        </div>
+
+        <button id="start-btn" class="btn primary-btn">Start Game</button>
+
+        <div class="impact-panel">
+          <h2>Global Impact</h2>
+          <div class="progress-bar">
+            <div id="global-progress-fill" class="progress-fill"></div>
+          </div>
+          <p id="session-buckets-text">Buckets filled this session: 0 / 10</p>
+          <p id="people-helped-text">People helped: 0</p>
+        </div>
+        
+      </div>
+    </section>
+
+    <!-- GAME SCREEN -->
+    <section id="game-screen" class="screen hidden">
+      <div class="game-shell">
+        <header class="top-panel">
+          <div class="stat-box">Score: <span id="score">0</span></div>
+          <div class="stat-box">Buckets: <span id="bucket-count">0</span></div>
+          <div class="stat-box">Time: <span id="time">30</span>s</div>
+          <div class="stat-box">Health: <span id="health">❤️❤️❤️</span></div>
+        </header>
+
+        <div id="game-container">
+          <div id="instruction-popup" class="instruction-popup hidden">
+            <p class="instruction-popup-text">
+              Catch clean droplets to help deliver clean water. Avoid polluted droplets,
+              because each polluted drop reduces your bucket's health.
+            </p>
+            <button id="instruction-got-it-btn" class="btn primary-btn instruction-got-it-btn">Got it</button>
+          </div>
+
+          <div class="legend">
+            <span class="legend-item">
+              <span class="legend-dot clean-legend"></span> Clean drop
+            </span>
+            <span class="legend-item">
+              <span class="legend-dot polluted-legend"></span> Polluted drop
+            </span>
+          </div>
+
+          <div id="feedback-message" class="feedback-message"></div>
+          <div id="bucket"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- GAME OVER SCREEN -->
+    <section id="game-over-screen" class="screen hidden">
+      <div class="card result-card">
+        <img src="img/cw_logo-horizontal.png" alt="charity: water logo" class="logo">
+        <h1 class="result-title">Game Over</h1>
+
+        <p id="end-message" class="end-message">Great job helping deliver clean water!</p>
+
+        <div class="results">
+          <p>Final score: <span id="final-score">0</span></p>
+          <p>Buckets filled this round: <span id="round-buckets-result">0</span></p>
+          <p>Total buckets this session: <span id="session-buckets-result">0</span></p>
+          <p>People helped total: <span id="people-helped-result">0</span></p>
+        </div>
+
+        <div class="impact-panel">
+          <h2>Global Impact</h2>
+          <div class="progress-bar">
+            <div id="game-over-progress-fill" class="progress-fill"></div>
+          </div>
+        </div>
+
+        <div class="button-row">
+          <button id="play-again-btn" class="btn primary-btn">Play Again</button>
+          <button id="home-btn" class="btn secondary-btn">Home</button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
