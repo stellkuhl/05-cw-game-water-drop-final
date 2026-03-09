@@ -40,7 +40,7 @@ Fonts:
 }
 
 body {
-  font-family: Avenir, Helvetica, sans-serif;
+  font-family: "Montserrat", Avenir, Helvetica, sans-serif;
   background: var(--cw-light);
   color: var(--cw-dark);
   min-height: 100vh;
@@ -86,6 +86,7 @@ body {
   flex-direction: column;
   align-items: center;
   text-align: center;
+  position: relative;
   overflow-y: auto;
 }
 
@@ -108,7 +109,7 @@ body {
   font-size: 80px;
   letter-spacing: 2px;
   font-weight: 500;
-  font-family: "Proxima Nova", Avenir, Helvetica, sans-serif;
+  font-family: "Montserrat", Avenir, Helvetica, sans-serif;
   color: var(--cw-blue);
 }
 
@@ -123,11 +124,12 @@ body {
   width: min(300px, 78%);
   padding: 16px 24px;
   font-size: clamp(20px, 2.4vw, 26px);
-  font-family: "Proxima Nova", Avenir, Helvetica, sans-serif;
+  font-family: "Montserrat", Avenir, Helvetica, sans-serif;
   border-radius: 14px;
   margin: 36px auto 12px;
   background: var(--cw-yellow);
   color: var(--cw-dark);
+  order: 2;
 }
 
 .start-card .instructions {
@@ -139,30 +141,35 @@ body {
 
 .impact-panel {
   width: 100%;
-  max-width: 420px;
+  max-width: 360px;
   background:  #fff7e1;
   border-radius: 14px;
-  padding: 18px;
-  margin: 10px 0 28px;
+  padding: 14px;
+  margin: 8px 0 22px;
 }
 
 .start-card .impact-panel {
+  order: 4;
   margin-top: auto;
   margin-bottom: 0;
 }
 
+.result-card .impact-panel {
+  background: var(--cw-white);
+}
+
 .impact-panel h2 {
-  font-size: 20px;
-  margin-bottom: 12px;
+  font-size: 16px;
+  margin-bottom: 8px;
 }
 
 .progress-bar {
   width: 100%;
-  height: 22px;
+  height: 16px;
   background: var(--cw-gray);
   border-radius: 999px;
   overflow: hidden;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .progress-fill {
@@ -173,8 +180,8 @@ body {
 }
 
 .impact-panel p {
-  font-size: 16px;
-  margin-top: 6px;
+  font-size: 13px;
+  margin-top: 4px;
 }
 
 .btn {
@@ -184,12 +191,13 @@ body {
   font-size: 18px;
   font-weight: 700;
   cursor: pointer;
-  transition: transform 0.15s ease, opacity 0.15s ease;
+  transition: transform 0.15s ease, opacity 0.15s ease, filter 0.15s ease;
 }
 
 .btn:hover {
   transform: translateY(-1px);
-  opacity: 0.95;
+  opacity: 1;
+  filter: brightness(1.08);
 }
 
 .primary-btn {
@@ -202,6 +210,81 @@ body {
   color: var(--cw-dark);
 }
 
+.start-card .difficulty-panel {
+  position: static;
+  order: 3;
+  width: 100%;
+  max-width: 360px;
+  margin: 8px auto 14px;
+  text-align: center;
+  z-index: 1;
+}
+
+.start-card .difficulty-panel h2 {
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.start-card .difficulty-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.difficulty-btn {
+  border: 2px solid var(--cw-blue);
+  background: var(--cw-white);
+  color: var(--cw-dark);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.difficulty-btn:hover {
+  background: #eef9ff;
+  filter: brightness(1.04);
+}
+
+.difficulty-btn.selected {
+  background: var(--cw-blue);
+  color: var(--cw-white);
+}
+
+.cw-footer {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  margin-top: 0;
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 10px;
+  padding: 6px 8px;
+  z-index: 5;
+}
+
+.cw-footer a {
+  color: var(--cw-light-blue);
+  font-weight: 700;
+  text-decoration: none;
+  font-size: 12px;
+  background: var(--cw-white);
+  border: 1px solid var(--cw-gray);
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+
+.cw-footer a:hover {
+  background: #f6fbff;
+  text-decoration: none;
+}
 .top-panel {
   display: flex;
   flex-wrap: wrap;
@@ -302,6 +385,12 @@ body {
   border-radius: 0 0 22px 22px;
   transform: translateX(-50%);
   z-index: 10;
+  touch-action: none;
+  cursor: grab;
+}
+
+#bucket:active {
+  cursor: grabbing;
 }
 
 #bucket::before {
@@ -311,8 +400,9 @@ body {
   height: 24px;
   top: -10px;
   left: 0;
-  background: var(--cw-white);
+  background: var(--bucket-rim-color, var(--cw-white));
   border-radius: 50%;
+  transition: background 0.12s ease;
 }
 
 .drop {
@@ -337,8 +427,9 @@ body {
   right: 18px;
   z-index: 30;
   background: rgba(255, 255, 255, 0.95);
-  padding: 10px 14px;
+  padding: 6px 10px;
   border-radius: 10px;
+  font-size: 12px;
   font-weight: 700;
   opacity: 0;
   transition: opacity 0.2s ease;
@@ -346,6 +437,24 @@ body {
 
 .feedback-message.show {
   opacity: 1;
+}
+
+.milestone-popup {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(420px, 86%);
+  background: rgba(255, 255, 255, 0.96);
+  border: 2px solid var(--cw-blue);
+  border-radius: 12px;
+  padding: 12px 14px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--cw-dark);
+  z-index: 35;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
 }
 
 .result-card {
@@ -359,6 +468,9 @@ body {
 
 .result-title {
   font-size: 56px;
+  font-family: Avenir, "Montserrat", Helvetica, sans-serif;
+  text-transform: uppercase;
+  color: var(--cw-yellow);
   margin-top: 18px;
   margin-bottom: 16px;
 }
@@ -369,9 +481,24 @@ body {
   max-width: 500px;
 }
 
+.end-message.nice-start {
+  color: var(--cw-blue);
+}
+
+.end-message.win-message {
+  color: var(--cw-blue);
+}
+
 .results {
-  font-size: 18px;
-  line-height: 1.8;
+  width: 100%;
+  max-width: 360px;
+  font-size: 14px;
+  line-height: 1.6;
+  text-align: left;
+  border: 2px solid var(--cw-blue);
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: var(--cw-white);
   margin-bottom: 26px;
 }
 
@@ -405,6 +532,34 @@ body {
     font-size: 48px;
   }
 
+  .start-card #start-btn {
+    order: 2;
+  }
+
+  .start-card .difficulty-panel {
+    position: static;
+    order: 3;
+    width: auto;
+    margin: 6px auto 12px;
+    text-align: center;
+  }
+
+  .start-card .difficulty-panel h2 {
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
+
+  .start-card .difficulty-buttons {
+    justify-content: center;
+    gap: 4px;
+  }
+
+  .start-card .difficulty-btn {
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 7px;
+  }
+
   .instructions {
     font-size: 16px;
   }
@@ -423,5 +578,17 @@ body {
 
   .result-title {
     font-size: 42px;
+  }
+
+  .cw-footer {
+    top: 10px;
+    right: 10px;
+    gap: 6px;
+    padding: 4px 6px;
+  }
+
+  .cw-footer a {
+    font-size: 11px;
+    padding: 5px 8px;
   }
 }

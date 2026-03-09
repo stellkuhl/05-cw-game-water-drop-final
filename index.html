@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Droplet | charity: water</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -17,6 +20,15 @@
           <h1 class="game-title">DROPLET</h1>
         </div>
 
+        <div class="difficulty-panel">
+          <h2>Select Difficulty</h2>
+          <div class="difficulty-buttons">
+            <button class="difficulty-btn selected" data-mode="easy">Easy</button>
+            <button class="difficulty-btn" data-mode="normal">Normal</button>
+            <button class="difficulty-btn" data-mode="hard">Hard</button>
+          </div>
+        </div>
+
         <button id="start-btn" class="btn primary-btn">Start Game</button>
 
         <div class="impact-panel">
@@ -27,7 +39,14 @@
           <p id="session-buckets-text">Buckets filled this session: 0 / 10</p>
           <p id="people-helped-text">People helped: 0</p>
         </div>
-        
+        <footer class="cw-footer">
+          <a href="https://www.charitywater.org/" target="_blank" rel="noopener noreferrer"> 
+          Visit charity: water
+          </a>
+          <a href="https://www.charitywater.org/donate" target="_blank" rel="noopener noreferrer">
+          Donate
+          </a>
+        </footer>
       </div>
     </section>
 
@@ -60,6 +79,7 @@
           </div>
 
           <div id="feedback-message" class="feedback-message"></div>
+          <div id="milestone-popup" class="milestone-popup hidden"></div>
           <div id="bucket"></div>
         </div>
       </div>

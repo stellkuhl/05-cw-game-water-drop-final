@@ -30,6 +30,9 @@ const peopleHelpedResult = document.getElementById("people-helped-result");
 const endMessage = document.getElementById("end-message");
 const instructionPopup = document.getElementById("instruction-popup");
 const instructionGotItBtn = document.getElementById("instruction-got-it-btn");
+const milestonePopup = document.getElementById("milestone-popup");
+const difficultyButtons = document.querySelectorAll(".difficulty-btn");
+const legend = document.querySelector(".legend");
 
 const feedbackMessage = document.getElementById("feedback-message");
 
@@ -42,7 +45,48 @@ const bucket = document.getElementById("bucket");
 // -----------------------------
 let gameRunning = false;
 let score = 0;
-let timeLeft = 30;
+let difficultyMode = "easy";
+
+const difficultySettings = {
+  easy: {
+    startTime: 40,
+    spawnRate: 1000,
+    fasterSpawnRate: 750,
+    pollutedChanceEarly: 0.15,
+    pollutedChanceLate: 0.25,
+    winScore: 10,
+    dropsPerSpawn: 1,
+    dropsPerSpawnLate: 1,
+    speedMultiplierEarly: 1,
+    speedMultiplierLate: 1
+  },
+  normal: {
+    startTime: 30,
+    spawnRate: 850,
+    fasterSpawnRate: 600,
+    pollutedChanceEarly: 0.22,
+    pollutedChanceLate: 0.35,
+    winScore: 15,
+    dropsPerSpawn: 2,
+    dropsPerSpawnLate: 2,
+    speedMultiplierEarly: 1.15,
+    speedMultiplierLate: 1.2
+  },
+  hard: {
+    startTime: 20,
+    spawnRate: 650,
+    fasterSpawnRate: 450,
+    pollutedChanceEarly: 0.3,
+    pollutedChanceLate: 0.45,
+    winScore: 20,
+    dropsPerSpawn: 2,
+    dropsPerSpawnLate: 3,
+    speedMultiplierEarly: 1.3,
+    speedMultiplierLate: 1.4
+  }
+};
+
+let timeLeft = difficultySettings.easy.startTime;
 let health = 3;
 let cleanDropsCaught = 0;
 let roundBucketsFilled = 0;
@@ -56,6 +100,9 @@ let bucketX = 0;
 let moveLeft = false;
 let moveRight = false;
 const bucketSpeed = 8;
+let isBucketDragging = false;
+let activePointerId = null;
+let dragOffsetX = 0;
 
 let drops = [];
 
@@ -64,9 +111,16 @@ let timerInterval = null;
 let animationFrameId = null;
 let difficultyTimeout = null;
 let introStartTimeout = null;
+let legendHideTimeout = null;
+let milestonePopupTimeout = null;
 let waitingForInstructionDismiss = false;
+let hasShownMilestoneAt15 = false;
 
 let shouldShowFirstRunInstructions = true;
+
+function getCurrentDifficultySettings() {
+  return difficultySettings[difficultyMode] || difficultySettings.easy;
+}
 
 // -----------------------------
 // Utility
@@ -113,6 +167,15 @@ function showFeedback(text) {
   }, 700);
 }
 
+function setBucketRimColorFromDrop(dropElement) {
+  const dropColor = getComputedStyle(dropElement).backgroundColor;
+  bucket.style.setProperty("--bucket-rim-color", dropColor);
+}
+
+function resetBucketRimColor() {
+  bucket.style.setProperty("--bucket-rim-color", "var(--cw-white)");
+}
+
 function clearDrops() {
   drops.forEach(drop => drop.element.remove());
   drops = [];
@@ -123,19 +186,40 @@ function stopLoops() {
   clearInterval(timerInterval);
   clearTimeout(difficultyTimeout);
   clearTimeout(introStartTimeout);
+  clearTimeout(legendHideTimeout);
+  clearTimeout(milestonePopupTimeout);
   cancelAnimationFrame(animationFrameId);
 
   spawnInterval = null;
   timerInterval = null;
   difficultyTimeout = null;
   introStartTimeout = null;
+  legendHideTimeout = null;
+  milestonePopupTimeout = null;
   waitingForInstructionDismiss = false;
   animationFrameId = null;
+  isBucketDragging = false;
+  activePointerId = null;
+  dragOffsetX = 0;
+
+  if (milestonePopup) {
+    milestonePopup.classList.add("hidden");
+  }
 }
 
 function hideInstructionPopup() {
   if (!instructionPopup) return;
   instructionPopup.classList.add("hidden");
+}
+
+function startLegendHideCountdown() {
+  if (!legend) return;
+
+  clearTimeout(legendHideTimeout);
+  legendHideTimeout = setTimeout(() => {
+    if (!gameRunning) return;
+    legend.classList.add("hidden");
+  }, 5000);
 }
 
 function showFirstRunInstructionsIfNeeded() {
@@ -157,24 +241,32 @@ function dismissInstructionsAndStart() {
   hideInstructionPopup();
 
   if (!gameRunning) return;
+  startLegendHideCountdown();
   startGameplayLoops();
 }
 
 function startGameplayLoops() {
+  const settings = difficultySettings[difficultyMode];
+
   // Spawn drops
-  spawnInterval = setInterval(createDrop, 850);
+  spawnInterval = setInterval(createDrop, settings.spawnRate);
 
   // Small difficulty bump halfway through
   difficultyTimeout = setTimeout(() => {
     if (!gameRunning) return;
     clearInterval(spawnInterval);
-    spawnInterval = setInterval(createDrop, 600);
-  }, 15000);
+    spawnInterval = setInterval(createDrop, settings.fasterSpawnRate);
+  }, Math.floor((settings.startTime / 2) * 1000));
 
   // Timer
   timerInterval = setInterval(() => {
     timeLeft--;
     updateGameUI();
+
+    if (timeLeft === 15 && !hasShownMilestoneAt15) {
+      hasShownMilestoneAt15 = true;
+      showMilestonePopup();
+    }
 
     if (timeLeft <= 0) {
       endGame();
@@ -190,10 +282,12 @@ function startGameplayLoops() {
 function startGame() {
   stopLoops();
   clearDrops();
+  resetBucketRimColor();
+  hasShownMilestoneAt15 = false;
 
   gameRunning = true;
   score = 0;
-  timeLeft = 30;
+  timeLeft = difficultySettings[difficultyMode].startTime;
   health = 3;
   cleanDropsCaught = 0;
   roundBucketsFilled = 0;
@@ -203,6 +297,11 @@ function startGame() {
   updateGameUI();
   updateGlobalImpactBar();
   showScreen(gameScreen);
+
+  if (legend) {
+    legend.classList.remove("hidden");
+    clearTimeout(legendHideTimeout);
+  }
 
   // Reset bucket position after game screen is visible
   const containerWidth = gameContainer.clientWidth;
@@ -220,13 +319,31 @@ function startGame() {
     return;
   }
 
+  startLegendHideCountdown();
   startGameplayLoops();
+}
+
+function showMilestonePopup() {
+  if (!milestonePopup) return;
+
+  const bucketWord = roundBucketsFilled === 1 ? "bucket" : "buckets";
+  milestonePopup.textContent = `Milestone: 15 seconds left. You have filled ${roundBucketsFilled} ${bucketWord} so far!`;
+  milestonePopup.classList.remove("hidden");
+
+  clearTimeout(milestonePopupTimeout);
+  milestonePopupTimeout = setTimeout(() => {
+    milestonePopup.classList.add("hidden");
+  }, 2200);
 }
 
 function goHome() {
   stopLoops();
   clearDrops();
   hideInstructionPopup();
+
+  if (legend) {
+    legend.classList.remove("hidden");
+  }
 
   gameRunning = false;
   showScreen(startScreen);
@@ -258,6 +375,54 @@ document.addEventListener("keyup", (event) => {
   }
 });
 
+function setBucketPositionFromClientX(clientX) {
+  const containerRect = gameContainer.getBoundingClientRect();
+  const bucketWidth = bucket.offsetWidth;
+  const nextX = clientX - containerRect.left - dragOffsetX;
+
+  bucketX = Math.min(Math.max(nextX, 0), containerRect.width - bucketWidth);
+  bucket.style.left = `${bucketX}px`;
+}
+
+function handleBucketPointerDown(event) {
+  if (!gameRunning) return;
+
+  isBucketDragging = true;
+  activePointerId = event.pointerId;
+  moveLeft = false;
+  moveRight = false;
+
+  const bucketRect = bucket.getBoundingClientRect();
+  dragOffsetX = event.clientX - bucketRect.left;
+
+  if (bucket.setPointerCapture) {
+    bucket.setPointerCapture(event.pointerId);
+  }
+}
+
+function handleBucketPointerMove(event) {
+  if (!gameRunning || !isBucketDragging) return;
+  if (event.pointerId !== activePointerId) return;
+
+  if (event.cancelable) {
+    event.preventDefault();
+  }
+
+  setBucketPositionFromClientX(event.clientX);
+}
+
+function handleBucketPointerEnd(event) {
+  if (event.pointerId !== activePointerId) return;
+
+  isBucketDragging = false;
+  activePointerId = null;
+  dragOffsetX = 0;
+
+  if (bucket.releasePointerCapture && bucket.hasPointerCapture(event.pointerId)) {
+    bucket.releasePointerCapture(event.pointerId);
+  }
+}
+
 // -----------------------------
 // Bucket movement
 // -----------------------------
@@ -282,34 +447,50 @@ function moveBucket() {
 function createDrop() {
   if (!gameRunning) return;
 
-  const drop = document.createElement("div");
-  drop.classList.add("drop");
+  const settings = difficultySettings[difficultyMode];
+  const isLateGame = timeLeft <= Math.ceil(settings.startTime / 2);
+  const dropsThisSpawn = isLateGame
+    ? settings.dropsPerSpawnLate
+    : settings.dropsPerSpawn;
 
-  const pollutedChance = timeLeft <= 15 ? 0.35 : 0.22;
-  const isPolluted = Math.random() < pollutedChance;
+  for (let i = 0; i < dropsThisSpawn; i++) {
+    const drop = document.createElement("div");
+    drop.classList.add("drop");
 
-  drop.classList.add(isPolluted ? "polluted-drop" : "clean-drop");
+    const pollutedChance =
+      isLateGame
+      ? settings.pollutedChanceLate
+      : settings.pollutedChanceEarly;
 
-  const x = Math.random() * (gameContainer.clientWidth - 30);
-  const y = 0;
-  const speed = timeLeft <= 15
-    ? Math.random() * 1.6 + 4
-    : Math.random() * 1.2 + 2.8;
+    const isPolluted = Math.random() < pollutedChance;
 
-  drop.style.left = `${x}px`;
-  drop.style.top = `${y}px`;
+    drop.classList.add(isPolluted ? "polluted-drop" : "clean-drop");
 
-  gameContainer.appendChild(drop);
+    const x = Math.random() * (gameContainer.clientWidth - 30);
+    const y = 0;
 
-  drops.push({
-    element: drop,
-    x,
-    y,
-    width: 28,
-    height: 38,
-    speed,
-    polluted: isPolluted
-  });
+    const baseSpeed = isLateGame
+      ? Math.random() * 1.6 + 4
+      : Math.random() * 1.2 + 2.8;
+    const speed = baseSpeed * (
+      isLateGame ? settings.speedMultiplierLate : settings.speedMultiplierEarly
+    );
+
+    drop.style.left = `${x}px`;
+    drop.style.top = `${y}px`;
+
+    gameContainer.appendChild(drop);
+
+    drops.push({
+      element: drop,
+      x,
+      y,
+      width: 28,
+      height: 38,
+      speed,
+      polluted: isPolluted
+    });
+  }
 }
 
 function updateDrops() {
@@ -330,6 +511,8 @@ function updateDrops() {
 
     // Collision
     if (isColliding(dropRect, bucketRect)) {
+      setBucketRimColorFromDrop(drop.element);
+
       if (drop.polluted) {
         health--;
         updateGameUI();
@@ -419,6 +602,7 @@ function endGame() {
   gameRunning = false;
   stopLoops();
   clearDrops();
+  resetBucketRimColor();
   hideInstructionPopup();
 
   finalScoreDisplay.textContent = score;
@@ -426,9 +610,13 @@ function endGame() {
   sessionBucketsResult.textContent = sessionBucketsFilled;
   peopleHelpedResult.textContent = peopleHelped;
 
-  if (score >= 15) {
+  if (score >= difficultySettings[difficultyMode].winScore) {
+    endMessage.classList.remove("nice-start");
+    endMessage.classList.add("win-message");
     endMessage.textContent = "Great job helping deliver clean water!";
   } else {
+    endMessage.classList.remove("win-message");
+    endMessage.classList.add("nice-start");
     endMessage.textContent = "Nice start — play again to fill even more buckets!";
   }
 
@@ -442,6 +630,19 @@ function endGame() {
 startBtn.addEventListener("click", startGame);
 playAgainBtn.addEventListener("click", startGame);
 homeBtn.addEventListener("click", goHome);
+
+bucket.addEventListener("pointerdown", handleBucketPointerDown);
+bucket.addEventListener("pointermove", handleBucketPointerMove);
+bucket.addEventListener("pointerup", handleBucketPointerEnd);
+bucket.addEventListener("pointercancel", handleBucketPointerEnd);
+
+difficultyButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    difficultyButtons.forEach((btn) => btn.classList.remove("selected"));
+    button.classList.add("selected");
+    difficultyMode = button.dataset.mode;
+  });
+});
 
 if (instructionGotItBtn) {
   instructionGotItBtn.addEventListener("click", dismissInstructionsAndStart);
